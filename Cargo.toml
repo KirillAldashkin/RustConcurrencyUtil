@@ -2,5 +2,9 @@
 name = "conc-util"
 version = "0.1.0"
 edition = "2024"
+description = "[no_std] utilities for concurrency and async"
+license = "MIT"
+repository = "https://github.com/KirillAldashkin/RustConcurrencyUtil"
+keywords = ["async", "futures", "future", "no_std"]
 
 [dependencies]
