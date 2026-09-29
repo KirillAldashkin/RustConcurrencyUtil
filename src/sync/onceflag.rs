@@ -15,4 +15,8 @@ impl OnceFlag {
     pub fn fired(&self) -> bool {
         self.0.load(Ordering::Acquire)
     }
+
+    pub fn fired_mut(&mut self) -> bool {
+        *self.0.get_mut()
+    }
 }

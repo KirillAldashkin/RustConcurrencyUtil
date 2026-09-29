@@ -15,6 +15,10 @@ impl<T> SpinLock<T> {
         Self(AtomicBool::new(false), UnsafeCell::new(data))
     }
 
+    pub fn get(&mut self) -> &mut T {
+        self.1.get_mut()
+    }
+
     pub fn lock<'a>(&'a self) -> SpinLockScope<'a, T> {
         while self.0.swap(true, Ordering::AcqRel) {}
         // SAFETY: spinlock above guarantees unique access
