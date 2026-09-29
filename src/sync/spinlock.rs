@@ -5,10 +5,10 @@ use core::{
 };
 
 #[derive(Debug)]
-pub struct SpinLock<T = ()>(AtomicBool, UnsafeCell<T>);
+pub struct SpinLock<T>(AtomicBool, UnsafeCell<T>);
 
 // SAFETY: UnsafeCell is only accessed when locked atomically.
-unsafe impl Sync for SpinLock {}
+unsafe impl<T> Sync for SpinLock<T> {}
 
 impl<T> SpinLock<T> {
     pub fn new(data: T) -> Self {
