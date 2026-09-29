@@ -4,6 +4,7 @@ use core::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
+#[derive(Debug)]
 pub struct SpinLock<T = ()>(AtomicBool, UnsafeCell<T>);
 
 // SAFETY: UnsafeCell is only accessed when locked atomically.
@@ -22,6 +23,7 @@ impl<T> SpinLock<T> {
     }
 }
 
+#[derive(Debug)]
 pub struct SpinLockScope<'a, T>(&'a AtomicBool, &'a mut T);
 
 impl<'a, T> Drop for SpinLockScope<'a, T> {

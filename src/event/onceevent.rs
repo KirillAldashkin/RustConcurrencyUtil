@@ -4,12 +4,13 @@ use alloc::{sync::Arc, vec::Vec};
 
 use crate::sync::{OnceFlag, SpinLock};
 
+#[derive(Debug)]
 struct OnceInner {
     used: OnceFlag,
     wakers: SpinLock<Vec<Waker>>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct OnceEvent(Arc<OnceInner>);
 
 impl OnceEvent {

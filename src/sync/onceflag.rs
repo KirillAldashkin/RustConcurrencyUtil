@@ -1,5 +1,6 @@
 use core::sync::atomic::{AtomicBool, Ordering};
 
+#[derive(Debug)]
 pub struct OnceFlag(AtomicBool);
 
 impl OnceFlag {
