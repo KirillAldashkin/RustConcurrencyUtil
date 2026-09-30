@@ -3,6 +3,6 @@ mod onceevent;
 #[cfg(feature = "alloc")]
 pub use onceevent::OnceEvent;
 
-pub trait Event {
+pub trait Event where for<'a> &'a Self: Future {
     fn fire(&self);
 }
