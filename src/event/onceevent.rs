@@ -1,3 +1,5 @@
+#![cfg(feature = "alloc")]
+
 use core::{
     mem::ManuallyDrop,
     pin::Pin,
