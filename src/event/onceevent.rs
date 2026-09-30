@@ -6,43 +6,32 @@ use core::{
     task::{self, Waker},
 };
 
-use alloc::{sync::Arc, vec::Vec};
+use alloc::vec::Vec;
 
-use crate::sync::{OnceFlag, SpinLock};
+use crate::{event::Event, sync::{OnceFlag, SpinLock}};
 
 #[derive(Debug)]
-struct OnceInner {
+pub struct OnceEvent {
     used: OnceFlag,
     wakers: SpinLock<ManuallyDrop<Vec<Waker>>>,
 }
 
-impl Drop for OnceInner {
-    fn drop(&mut self) {
-        if !self.used.fired_mut() {
-            // SAFETY: this is only dropped here and taken in `fire()`,
-            // but it also sets the `used` flag which is checked above.
-            unsafe { ManuallyDrop::drop(self.wakers.get()) };
+impl OnceEvent {
+    pub fn new() -> Self {
+        Self {
+            used: OnceFlag::new(),
+            wakers: SpinLock::new(ManuallyDrop::new(Vec::new())),
         }
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct OnceEvent(Arc<OnceInner>);
-
-impl OnceEvent {
-    pub fn new() -> Self {
-        Self(Arc::new(OnceInner {
-            used: OnceFlag::new(),
-            wakers: SpinLock::new(ManuallyDrop::new(Vec::new())),
-        }))
-    }
-
-    pub fn fire(&self) {
-        if self.0.used.fire() {
+impl Event for OnceEvent {
+    fn fire(&self) {
+        if self.used.fire() {
             return;
         }
 
-        let mut lock = self.0.wakers.lock();
+        let mut lock = self.wakers.lock();
         // SAFETY:
         // 1) Value is taken once - `used` is checked at the beginning
         // 2) Value is never used again - `poll` checks the same `used`
@@ -55,17 +44,27 @@ impl OnceEvent {
     }
 }
 
-impl Future for OnceEvent {
+impl Drop for OnceEvent {
+    fn drop(&mut self) {
+        if !self.used.fired_mut() {
+            // SAFETY: this is only dropped here and taken in `fire()`,
+            // but it also sets the `used` flag which is checked above.
+            unsafe { ManuallyDrop::drop(self.wakers.get()) };
+        }
+    }
+}
+
+impl Future for &OnceEvent {
     type Output = ();
 
     fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> task::Poll<Self::Output> {
-        if self.0.used.fired() {
+        if self.used.fired() {
             return task::Poll::Ready(());
         }
 
-        let mut wakers = self.0.wakers.lock();
+        let mut wakers = self.wakers.lock();
 
-        if self.0.used.fired() {
+        if self.used.fired() {
             return task::Poll::Ready(());
         }
 
