@@ -23,8 +23,27 @@ impl OnceEvent {
     }
 }
 
-impl Event for OnceEvent {
-    fn fire(&self) {
+impl Future for &OnceEvent {
+    type Output = ();
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> task::Poll<Self::Output> {
+        if self.used.fired() {
+            return task::Poll::Ready(());
+        }
+
+        let mut wakers = self.wakers.lock();
+
+        if self.used.fired() {
+            return task::Poll::Ready(());
+        }
+
+        wakers.push(cx.waker().clone());
+        return task::Poll::Pending;
+    }
+}
+
+impl Event for &OnceEvent {
+    fn fire(self) {
         if self.used.fire() {
             return;
         }
@@ -49,24 +68,5 @@ impl Drop for OnceEvent {
             // but it also sets the `used` flag which is checked above.
             unsafe { ManuallyDrop::drop(self.wakers.get()) };
         }
-    }
-}
-
-impl Future for &OnceEvent {
-    type Output = ();
-
-    fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> task::Poll<Self::Output> {
-        if self.used.fired() {
-            return task::Poll::Ready(());
-        }
-
-        let mut wakers = self.wakers.lock();
-
-        if self.used.fired() {
-            return task::Poll::Ready(());
-        }
-
-        wakers.push(cx.waker().clone());
-        return task::Poll::Pending;
     }
 }
