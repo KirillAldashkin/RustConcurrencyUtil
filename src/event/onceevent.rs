@@ -42,8 +42,10 @@ impl Future for &OnceEvent {
     }
 }
 
-impl Event for &OnceEvent {
-    fn fire(self) {
+impl Event for OnceEvent {
+    type Wait<'a> = &'a Self;
+    
+    fn fire(&self) {
         if self.used.fire() {
             return;
         }
@@ -58,6 +60,10 @@ impl Event for &OnceEvent {
         for waker in wakers {
             waker.wake();
         }
+    }
+    
+    fn wait<'a>(&'a self) -> Self::Wait<'a> {
+        self
     }
 }
 
