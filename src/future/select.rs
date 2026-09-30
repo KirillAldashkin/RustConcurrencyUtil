@@ -6,7 +6,13 @@ use core::{
 use crate::Either;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Select<A: Future, B: Future>(pub A, pub B);
+pub struct Select<A: Future, B: Future>(A, B);
+
+impl<A: Future, B: Future> Select<A, B> {
+    pub fn new(a: A, b: B) -> Self {
+        Self(a, b)
+    }
+}
 
 impl<A: Future, B: Future> Future for Select<A, B> {
     type Output = Either<A::Output, B::Output>;
