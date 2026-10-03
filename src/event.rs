@@ -4,8 +4,6 @@ mod onceevent;
 pub use onceevent::OnceEvent;
 
 pub trait Event {
-    type Wait: Future;
-
     fn fire(self);
-    fn wait(self) -> Self::Wait;
+    fn wait(self) -> impl Future;
 }

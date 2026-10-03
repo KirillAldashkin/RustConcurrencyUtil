@@ -1,7 +1,5 @@
 use core::{
-    mem::ManuallyDrop,
-    pin::Pin,
-    task::{self, Waker},
+    mem::ManuallyDrop, ops::Deref, pin::Pin, task::{self, Waker},
 };
 
 use alloc::vec::Vec;
@@ -23,28 +21,7 @@ impl OnceEvent {
     }
 }
 
-impl Future for &OnceEvent {
-    type Output = ();
-
-    fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> task::Poll<Self::Output> {
-        if self.used.fired() {
-            return task::Poll::Ready(());
-        }
-
-        let mut wakers = self.wakers.lock();
-
-        if self.used.fired() {
-            return task::Poll::Ready(());
-        }
-
-        wakers.push(cx.waker().clone());
-        return task::Poll::Pending;
-    }
-}
-
-impl Event for &OnceEvent {
-    type Wait = Self;
-    
+impl<D: Deref<Target = OnceEvent>> Event for D {
     fn fire(self) {
         if self.used.fire() {
             return;
@@ -62,8 +39,29 @@ impl Event for &OnceEvent {
         }
     }
     
-    fn wait(self) -> Self::Wait {
-        self
+    fn wait(self) -> impl Future {
+        OnceEventWaiter(self)
+    }
+}
+
+struct OnceEventWaiter<D>(D);
+
+impl<D: Deref<Target = OnceEvent>> Future for OnceEventWaiter<D> {
+    type Output = ();
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context<'_>) -> task::Poll<Self::Output> {
+        if self.0.used.fired() {
+            return task::Poll::Ready(());
+        }
+
+        let mut wakers = self.0.wakers.lock();
+
+        if self.0.used.fired() {
+            return task::Poll::Ready(());
+        }
+
+        wakers.push(cx.waker().clone());
+        return task::Poll::Pending;
     }
 }
 
