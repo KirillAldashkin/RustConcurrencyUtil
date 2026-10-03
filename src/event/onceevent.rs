@@ -1,10 +1,16 @@
 use core::{
-    mem::ManuallyDrop, ops::Deref, pin::Pin, task::{self, Waker},
+    mem::ManuallyDrop,
+    ops::Deref,
+    pin::Pin,
+    task::{self, Waker},
 };
 
 use alloc::vec::Vec;
 
-use crate::{event::Event, sync::{OnceFlag, SpinLock}};
+use crate::{
+    event::Event,
+    sync::{OnceFlag, SpinLock},
+};
 
 #[derive(Debug)]
 pub struct OnceEvent {
@@ -38,8 +44,8 @@ impl<D: Deref<Target = OnceEvent>> Event for D {
             waker.wake();
         }
     }
-    
-    fn wait(self) -> impl Future {
+
+    fn wait(self) -> impl Future<Output = ()> {
         OnceEventWaiter(self)
     }
 }

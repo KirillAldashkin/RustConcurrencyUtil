@@ -5,5 +5,5 @@ pub use onceevent::OnceEvent;
 
 pub trait Event {
     fn fire(self);
-    fn wait(self) -> impl Future;
+    fn wait(self) -> impl Future<Output = ()>;
 }
