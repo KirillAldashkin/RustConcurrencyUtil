@@ -4,8 +4,8 @@ mod onceevent;
 pub use onceevent::OnceEvent;
 
 pub trait Event {
-    type Wait<'a>: Future where Self: 'a;
+    type Wait: Future;
 
-    fn fire(&self);
-    fn wait<'a>(&'a self) -> Self::Wait<'a>;
+    fn fire(self);
+    fn wait(self) -> Self::Wait;
 }
